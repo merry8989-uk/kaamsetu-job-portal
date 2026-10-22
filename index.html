@@ -29,8 +29,8 @@ main{max-width:1120px;margin:28px auto;padding:0 20px}.hero{padding:34px;border-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* SETUP: Supabase project URL + anon/publishable key. Never put service_role key in browser. */
-const SUPABASE_URL = "https://lnclkwvbismmhhygpblw.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_dMccx0xBmAfPLHO8h1FlNA_i_BJjD0J";
+const SUPABASE_URL = "YOUR_SUPABASE_PROJECT_URL";
+const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
 const configured = SUPABASE_URL.startsWith("https://") && !SUPABASE_URL.includes("YOUR_") && !SUPABASE_ANON_KEY.includes("YOUR_");
 const db = configured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 let user=null, profile=null, authMode="login", adminView="pending", cacheJobs=[];
