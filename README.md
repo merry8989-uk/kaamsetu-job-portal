@@ -77,6 +77,27 @@ notice title by `parseDeadline()` in the ingest function.
 
 The Edge Function source is versioned at `functions/ingest-feeds/index.ts`.
 
+## Logging
+
+Every log row carries `created_at`, `severity`, `category`, `message`, `app_id`,
+`environment`, `request_id`, `device_id`, `path` and sanitized `metadata`.
+
+Severity: TRACE, DEBUG, INFO, WARN, ERROR, FATAL. Categories: `app`, `error`,
+`api`, `performance`, `activity`, `security`, `audit`, `background`, `ui`.
+
+- `logger.js` runs on every page: JavaScript errors and unhandled rejections,
+  page views, page-load timing, search actions, failed/successful logins and logout.
+  It never sends passwords or tokens and redacts sensitive metadata keys.
+- Audit is written by **database triggers** (`audit_jobs`, `audit_profiles`), so it
+  cannot be forged from the browser: job status changes, deletes and role changes.
+- The ingest function writes `background` logs for each run and each failed source.
+- Row Level Security: clients (anon/authenticated) may only **insert** application
+  logs; only admins can **read** or **delete** them.
+- Retention: a daily `pg_cron` job (`purge-old-logs`, 02:30 UTC) deletes logs older
+  than `log_retention_days` (default 90, in `app_config`).
+- Admins get a **Logs** panel in the dashboard: filter by severity/category, search,
+  and export the current view to CSV.
+
 ## Important limitations / production hardening
 - This is a functional starter, not a fully audited commercial hiring platform.
 - Employer approval currently uses manual SQL. Build a dedicated admin user-management screen before handing it to a larger team.

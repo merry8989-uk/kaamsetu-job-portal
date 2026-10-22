@@ -259,6 +259,19 @@ async function sbInsertIgnore(row: any): Promise<number> {
   return Array.isArray(data) ? data.length : 0;
 }
 
+async function log(severity: string, category: string, message: string, metadata: any) {
+  try {
+    await fetch(`${REST}/logs`, {
+      method: "POST",
+      headers: { ...H, "Content-Type": "application/json", Prefer: "return=minimal" },
+      body: JSON.stringify([{
+        severity, category, message,
+        app_id: "kaamsetu", environment: "prod", request_id: "ingest", metadata,
+      }]),
+    });
+  } catch (_e) { /* logging must never break ingestion */ }
+}
+
 async function sbPatch(path: string, body: any) {
   await fetch(`${REST}/${path}`, {
     method: "PATCH",
@@ -294,6 +307,7 @@ async function processSource(s: any) {
       last_run_at: new Date().toISOString(),
       last_status: `error: ${msg}`,
     });
+    await log("WARN", "background", "ingest_source_failed", { source: s.name, error: msg });
     return { source: s.name, error: msg };
   }
 }
@@ -315,6 +329,8 @@ Deno.serve(async (req) => {
     const sources = await sbGet(`job_sources?active=is.true&select=*&order=last_run_at.asc.nullsfirst&limit=${limit}`);
     const results = await mapLimit(sources, 10, processSource);
     const inserted = results.reduce((a, r: any) => a + (r.inserted || 0), 0);
+    const failed = results.filter((r: any) => r.error).length;
+    await log("INFO", "background", "ingest_run", { sources: sources.length, inserted, failed });
     return json({ ok: true, ran_at: new Date().toISOString(), sources: sources.length, inserted, results });
   } catch (e) {
     return json({ ok: false, error: String(e).slice(0, 400) }, 500);
