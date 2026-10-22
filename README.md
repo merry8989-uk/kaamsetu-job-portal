@@ -68,6 +68,19 @@ A company can submit a vacancy. It stays pending until admin approves it.
 - Test on mobile and desktop.
 - Verify application links and employer identity before approving posts.
 
+## Anonymous posting (no login)
+
+Visitors can post a vacancy without creating an account. On first visit the page
+generates a random device id, stores it in the browser (`localStorage`), and sends
+it with every request as an `x-device-id` header. That id is what lets an anonymous
+visitor see and delete their own submissions.
+
+- Posts are inserted as `pending` and only become public after admin approval.
+- Row Level Security lets the `anon` role insert, read and delete only rows whose
+  `device_id` matches the request's `x-device-id` header.
+- The device id is not a security credential: clearing browser storage creates a
+  new identity. Keep admin approval on to control spam and job scams.
+
 ## Important limitations / production hardening
 - This is a functional starter, not a fully audited commercial hiring platform.
 - Employer approval currently uses manual SQL. Build a dedicated admin user-management screen before handing it to a larger team.
