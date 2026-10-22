@@ -70,45 +70,28 @@ A company can submit a vacancy. It stays pending until admin approves it.
 
 ## Anonymous posting (no login)
 
-Visitors post a vacancy without an account. The page stores a random device id in
-`localStorage` and sends it as an `x-device-id` header. Posts are `pending` until an
-admin approves them.
+Visitors post without an account; a random device id in `localStorage` is sent as an `x-device-id` header. Posts stay `pending` until an admin approves.
 
 ## Vacancy archive
 
-A daily `pg_cron` job (`archive-expired-jobs-daily`, 01:15 UTC) stamps `archived_at`
-on jobs whose `deadline` has passed. The main feed hides them; the **Archive** view
-groups them by year and month. Rows are never deleted.
+A daily `pg_cron` job (`archive-expired-jobs-daily`, 01:15 UTC) stamps `archived_at` on jobs whose `deadline` passed. The main feed hides them; the **Archive** view groups them by year and month. Rows are never deleted.
 
 ## Daily job ingestion (India-only)
 
-- `job_sources` lists the allowed sources. India-focused sources are the official
-  government recruitment boards and notice pages (central plus state PSCs).
-- `job_sources.state_hint` makes a state PSC's notices land in the right state
-  (e.g. BPSC -> Bihar), so they show in the state-wise browse section.
-- The `ingest-feeds` Edge Function fetches every active source in parallel and
-  inserts `approved` rows, de-duplicated by `source_url`. Non-India items are skipped.
+- `job_sources` lists allowed sources: RSS/JSON feeds and official government notice pages.
+- `ingest-feeds` (Edge Function) fetches every active source in parallel and inserts `approved` rows, de-duplicated by `source_url`; non-India items are skipped.
 - `pg_cron` job `ingest-feeds-daily` (02:00 UTC) calls it through `pg_net`.
-- A daily agent job (08:00 IST) covers boards that block automated reads and writes
-  short summaries of new government notices.
+- A daily agent job (08:00 IST) covers boards that block bots and writes short summaries.
 
-Sources that read cleanly include HPSC (Haryana), MPPSC (Madhya Pradesh), Kerala PSC,
-GPSC (Gujarat), OPSC (Odisha), CGPSC, RPSC, TNPSC, UPPSC, DRDO, NTA, ISRO, India Post,
-LIC, Indian Navy and Employment News. Some boards block bots (UPSC returns 403, RBI
-418, a few have certificate or timeout issues) - the agent job covers those.
+Commercial portals (Naukri, LinkedIn, Indeed and similar) are never scraped or re-published.
 
-Commercial portals (Naukri, LinkedIn, Indeed and similar) are never scraped or
-re-published.
+## Sectors, states, districts and content kinds
 
-## Sectors and states
-
-- `sector` is set automatically by `public.classify_job_sector(title, source_name)`:
-  Government, Private, Banking, Railway, Civil Services, Defence, Police, Teaching,
-  Healthcare, IT & Software, Engineering, Internship.
-- `state` and `in_india` are set by `public.jobs_set_geo()` using the
-  `public.india_places` lookup (states, UTs and major cities).
-- The portal is India-only: the feed and the "Browse jobs by state" section show only
-  rows with `in_india = true`.
+- `sector`: Government, Private, Banking, Railway, Civil Services, Defence, Police, Teaching, Healthcare, IT & Software, Engineering, Internship.
+- `state` and `district`: set from the location by `public.jobs_set_geo()` using `public.india_places` and `public.districts` (779 districts across all states/UTs). Matching is whole-token, so short names do not mis-match.
+- Each district row also carries two official links: `nic_url` (district NIC portal) and `court_url` (district eCourts site).
+- `kind`: `job`, `tender` or `scheme` - the site shows Jobs / Tenders / Schemes as separate filters so tenders and schemes stay apart from jobs.
+- The portal is India-only: the feed and the browse-by-state / browse-by-district views show only rows with `in_india = true`. Selecting a state shows every district of that state, so all districts' notices sit in one place; clicking a district narrows further and shows that district's two links.
 
 ## Important limitations / production hardening
 - This is a functional starter, not a fully audited commercial hiring platform.
