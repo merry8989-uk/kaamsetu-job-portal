@@ -70,13 +70,9 @@ A company can submit a vacancy. It stays pending until admin approves it.
 
 ## Anonymous posting (no login)
 
-Visitors can post a vacancy without creating an account. On first visit the page
-generates a random device id, stores it in the browser (`localStorage`), and sends
-it with every request as an `x-device-id` header.
-
-- Posts are inserted as `pending` and only become public after admin approval.
-- RLS lets the `anon` role insert, read and delete only rows whose `device_id`
-  matches the request's `x-device-id` header.
+Visitors post a vacancy without an account. The page stores a random device id in
+`localStorage` and sends it as an `x-device-id` header. Posts are `pending` until an
+admin approves them.
 
 ## Vacancy archive
 
@@ -89,25 +85,23 @@ groups them by year and month. Rows are never deleted.
 - `job_sources` lists allowed sources (RSS/JSON feeds and official government notice
   pages).
 - The `ingest-feeds` Edge Function fetches each active source and inserts `approved`
-  rows, de-duplicated by `source_url`, keeping `source_name` + `source_url` for
-  attribution.
+  rows, de-duplicated by `source_url`, keeping `source_name` + `source_url`.
 - `pg_cron` job `ingest-feeds-daily` (02:00 UTC) calls it through `pg_net`.
 - A daily agent job (08:00 IST) writes short summaries of new government notices.
 
 Commercial portals (Naukri, LinkedIn, Indeed and similar) are never scraped or
-re-published: their listings are copyrighted and their terms forbid it.
+re-published.
 
-## Job sectors and filters
+## Sectors and states
 
-Every job gets a `sector`, assigned automatically by
-`public.classify_job_sector(title, source_name)` through a trigger on insert
-(existing rows were backfilled). Sectors: Government, Private, Banking, Railway,
-Civil Services, Defence, Police, Teaching, Healthcare, IT & Software, Engineering,
-Internship.
-
-The site exposes a **sector** filter next to the job-type filter, and each card shows
-its sector. It is a keyword heuristic, so an admin can override a row's `sector`
-directly.
+- `sector` is set automatically by `public.classify_job_sector(title, source_name)`
+  via a trigger: Government, Private, Banking, Railway, Civil Services, Defence,
+  Police, Teaching, Healthcare, IT & Software, Engineering, Internship.
+- `state` and `in_india` are set by `public.jobs_set_geo()` using the
+  `public.india_places` lookup (states, UTs and major cities).
+- The portal is **India-only**: the feed and the "Browse jobs by state" section show
+  only rows with `in_india = true`. The ingest function also skips non-India items.
+- Government notices are always treated as India based.
 
 ## Important limitations / production hardening
 - This is a functional starter, not a fully audited commercial hiring platform.
