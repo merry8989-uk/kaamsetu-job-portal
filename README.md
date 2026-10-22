@@ -72,47 +72,42 @@ A company can submit a vacancy. It stays pending until admin approves it.
 
 Visitors can post a vacancy without creating an account. On first visit the page
 generates a random device id, stores it in the browser (`localStorage`), and sends
-it with every request as an `x-device-id` header. That id lets an anonymous visitor
-see and delete their own submissions.
+it with every request as an `x-device-id` header.
 
 - Posts are inserted as `pending` and only become public after admin approval.
-- Row Level Security lets the `anon` role insert, read and delete only rows whose
-  `device_id` matches the request's `x-device-id` header.
-- The device id is not a security credential: clearing browser storage creates a
-  new identity. Keep admin approval on to control spam and job scams.
+- RLS lets the `anon` role insert, read and delete only rows whose `device_id`
+  matches the request's `x-device-id` header.
 
 ## Vacancy archive
 
-When a vacancy's last date passes it is archived, not deleted. A daily Supabase
-`pg_cron` job (`archive-expired-jobs-daily`, 01:15 UTC) calls
-`public.archive_expired_jobs()`, which stamps `archived_at` on any job whose
-`deadline` is in the past.
+A daily `pg_cron` job (`archive-expired-jobs-daily`, 01:15 UTC) stamps `archived_at`
+on jobs whose `deadline` has passed. The main feed hides them; the **Archive** view
+groups them by year and month. Rows are never deleted.
 
-- The main "Latest vacancies" feed hides archived jobs and past deadlines.
-- The **Archive** view groups archived vacancies by year and month.
-- Archiving only sets `archived_at`; rows are never deleted.
+## Daily job ingestion
 
-## Daily job ingestion (feeds and government notices)
+- `job_sources` lists allowed sources (RSS/JSON feeds and official government notice
+  pages).
+- The `ingest-feeds` Edge Function fetches each active source and inserts `approved`
+  rows, de-duplicated by `source_url`, keeping `source_name` + `source_url` for
+  attribution.
+- `pg_cron` job `ingest-feeds-daily` (02:00 UTC) calls it through `pg_net`.
+- A daily agent job (08:00 IST) writes short summaries of new government notices.
 
-Jobs are pulled automatically from sources we are allowed to read, never copied
-from commercial portals.
+Commercial portals (Naukri, LinkedIn, Indeed and similar) are never scraped or
+re-published: their listings are copyrighted and their terms forbid it.
 
-- `job_sources` lists the allowed sources: RSS/JSON feeds and official government
-  notice pages. Admins manage it; the public can read the active list.
-- A Supabase Edge Function (`ingest-feeds`) fetches each active source, maps it to a
-  `jobs` row and inserts it as `approved`. De-duplication is by `source_url` (unique
-  index); every row keeps `source_name` + `source_url` for attribution, and
-  `apply_url` points back to the original posting.
-- A daily `pg_cron` job (`ingest-feeds-daily`, 02:00 UTC) calls the function through
-  `pg_net`, authenticated with a secret kept in `app_config` (RLS on, no policies).
-- A separate daily agent job (08:00 IST) checks official government recruitment
-  pages, writes a short neutral summary of each new notification, and stores it with
-  a link to the official notification.
+## Job sectors and filters
 
-**What this does not do:** it never scrapes or re-publishes listings from commercial
-portals (Naukri, LinkedIn, Indeed and similar). Those prohibit scraping and their
-listings are copyrighted. Add a source only if it publishes a feed or you hold the
-right to use it.
+Every job gets a `sector`, assigned automatically by
+`public.classify_job_sector(title, source_name)` through a trigger on insert
+(existing rows were backfilled). Sectors: Government, Private, Banking, Railway,
+Civil Services, Defence, Police, Teaching, Healthcare, IT & Software, Engineering,
+Internship.
+
+The site exposes a **sector** filter next to the job-type filter, and each card shows
+its sector. It is a keyword heuristic, so an admin can override a row's `sector`
+directly.
 
 ## Important limitations / production hardening
 - This is a functional starter, not a fully audited commercial hiring platform.
