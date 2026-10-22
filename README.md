@@ -105,6 +105,15 @@ window: totals, by severity, by category, active devices, top pages, top searche
 and event counts. The dashboard shows it in an **Analytics** panel with a
 24-hour / 7-day / 30-day switch.
 
+### Server-side (bypass-proof) logging
+
+Clients no longer write to `logs` directly - the insert policy and grant are
+removed. All browser logging goes through `public.log_event(...)`, which validates
+severity/category, redacts sensitive metadata, and rate-limits to 120 events per
+device per minute. Registrations (`user_registered`) and job submissions
+(`job_submitted`) are written by **database triggers**, so they cannot be faked or
+skipped from the browser.
+
 ## Important limitations / production hardening
 - This is a functional starter, not a fully audited commercial hiring platform.
 - Employer approval currently uses manual SQL. Build a dedicated admin user-management screen before handing it to a larger team.

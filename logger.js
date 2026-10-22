@@ -29,18 +29,7 @@
 
   function send(severity, category, message, metadata) {
     try {
-      var body = [{
-        severity: severity,
-        category: category,
-        message: String(message).slice(0, 1000),
-        app_id: APP,
-        environment: ENV,
-        request_id: requestId,
-        device_id: deviceId,
-        path: location.pathname,
-        metadata: sanitize(metadata)
-      }];
-      fetch(SUPABASE_URL + "/rest/v1/logs", {
+      fetch(SUPABASE_URL + "/rest/v1/rpc/log_event", {
         method: "POST",
         keepalive: true,
         headers: {
@@ -49,7 +38,14 @@
           Authorization: "Bearer " + SUPABASE_ANON_KEY,
           Prefer: "return=minimal"
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify({
+          p_severity: severity,
+          p_category: category,
+          p_message: String(message).slice(0, 1000),
+          p_metadata: sanitize(metadata),
+          p_device_id: deviceId,
+          p_path: location.pathname
+        })
       }).catch(function () {});
     } catch (e) {}
   }
