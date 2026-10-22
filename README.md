@@ -68,16 +68,14 @@ A company can submit a vacancy. It stays pending until admin approves it.
 - Test on mobile and desktop.
 - Verify application links and employer identity before approving posts.
 
-## Separate pages: Jobs, Tenders, Schemes
+## Tender filters
 
-`index.html` shows **jobs only**. Tenders and schemes live on their own sub-pages,
-each with the same browse-by-state / browse-by-district controls and district links:
+`tenders.html` adds tender-specific controls: a **department** filter (built from
+`source_name`) and a **closing-date** filter (closing in 7 / 30 days, open, closed),
+plus a closing-date countdown badge on each card. The deadline is parsed from the
+notice title by `parseDeadline()` in the ingest function.
 
-- `tenders.html` - `kind = 'tender'`
-- `schemes.html` - `kind = 'scheme'`
-
-GitHub Pages serves them at `/tenders.html` and `/schemes.html`. The nav on every
-page links across.
+The Edge Function source is versioned at `functions/ingest-feeds/index.ts`.
 
 ## Important limitations / production hardening
 - This is a functional starter, not a fully audited commercial hiring platform.
