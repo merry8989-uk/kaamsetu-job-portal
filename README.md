@@ -68,20 +68,16 @@ A company can submit a vacancy. It stays pending until admin approves it.
 - Test on mobile and desktop.
 - Verify application links and employer identity before approving posts.
 
-## Accounts and admin
+## Separate pages: Jobs, Tenders, Schemes
 
-Register on the site with email + password; the first profile is created as
-`job_seeker`. To become admin, the owner account is promoted with:
+`index.html` shows **jobs only**. Tenders and schemes live on their own sub-pages,
+each with the same browse-by-state / browse-by-district controls and district links:
 
-```sql
-update public.profiles p set role = 'admin'
-from auth.users u where p.id = u.id and u.email = 'YOUR_EMAIL';
-```
+- `tenders.html` - `kind = 'tender'`
+- `schemes.html` - `kind = 'scheme'`
 
-After that the Dashboard shows **Admin moderation** and a **Users & roles** panel
-(`public.admin_list_users()` / `public.admin_set_role()`, both admin-only). Anyone
-else registers normally on the site, then the admin sets their role to `company`
-(to post jobs) or `admin` from that panel - no SQL needed.
+GitHub Pages serves them at `/tenders.html` and `/schemes.html`. The nav on every
+page links across.
 
 ## Important limitations / production hardening
 - This is a functional starter, not a fully audited commercial hiring platform.

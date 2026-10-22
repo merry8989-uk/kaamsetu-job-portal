@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Tenders - KaamSetu">
+<title>KaamSetu — Tenders</title>
+<style>
+:root{--ink:#172033;--muted:#64748b;--brand:#2457e6;--bg:#f5f7fb;--line:#e4e9f2;--card:#fff}
+*{box-sizing:border-box}body{margin:0;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+button,input,select,textarea{font:inherit}button{cursor:pointer;border:0;border-radius:10px;padding:11px 15px;font-weight:650;background:var(--brand);color:white}button.secondary{background:#eaf0ff;color:#2147b7}button.danger{background:#b42318}button:disabled{opacity:.5;cursor:not-allowed}
+header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:3}.nav{max-width:1120px;margin:auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px}.logo{font-size:22px;font-weight:850;letter-spacing:-.7px}.logo span{color:var(--brand)}.navlinks{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+main{max-width:1120px;margin:28px auto;padding:0 20px}.hero{padding:34px;border-radius:22px;background:linear-gradient(120deg,#172b65,#2457e6);color:white}.hero h1{font-size:clamp(28px,5vw,44px);line-height:1.1;margin:0 0 12px}.hero p{max-width:660px;color:#e2eaff}.search{display:grid;grid-template-columns:2fr 1fr auto;gap:9px;margin-top:22px}.panel,.job{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px}.sectionhead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:26px 0 14px}.sectionhead h2{margin:0;font-size:23px}.jobs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.job h3{margin:0 0 6px;font-size:19px}.company{font-weight:650}.muted{color:var(--muted)}.tags{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.tag{background:#eef2ff;color:#344e9e;border-radius:30px;padding:4px 9px;font-size:12px}.jobfoot{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:15px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}.field label{font-size:13px;font-weight:700}.field input,.field select,.field textarea,.search input,.search select{width:100%;padding:11px 12px;border:1px solid #cfd7e6;border-radius:10px;background:#fff;color:var(--ink)}textarea{min-height:100px;resize:vertical}.hidden{display:none!important}.notice{padding:12px 14px;border-radius:10px;margin:12px 0;background:#eaf0ff;color:#1e429f}.error{background:#fff0ed;color:#9a271b}.success{background:#e9f8ef;color:#17663a}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}.tabs button{background:#e7ebf3;color:#26334c}.tabs button.active{background:var(--brand);color:white}.empty{text-align:center;padding:32px;color:var(--muted)}footer{text-align:center;color:var(--muted);padding:35px 20px;font-size:13px}
+@media(max-width:700px){.search,.grid2{grid-template-columns:1fr}.jobs{grid-template-columns:1fr}.hero{padding:25px 20px}.nav{align-items:flex-start}.navlinks{justify-content:flex-end}.navlinks button{padding:9px 10px}.jobfoot{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<header><div class="nav"><div class="logo">Kaam<span>Setu</span></div><div class="navlinks"><a href="index.html"><button class="secondary">Jobs</button></a><a href="tenders.html"><button class="">Tenders</button></a><a href="schemes.html"><button class="secondary">Schemes</button></a></div></div></header>
+<main>
+<section class="hero"><h1>Tenders</h1><p>Sarkari aur district tenders, e-tender aur quotation notices — alag page par.</p></section>
+<div id="message" class="notice hidden" role="status"></div>
+<section id="listSection"><div class="sectionhead"><h2>Tenders</h2><select id="typeFilter" aria-label="Filter by type"><option value="">All types</option><option>Full-time</option><option>Part-time</option><option>Contract</option><option>Internship</option><option>Remote</option></select></div><div id="list" class="jobs"><div class="empty">Loading…</div></div></section>
+<section id="statesSection" style="margin-top:26px"><div class="sectionhead"><h2>Browse by state</h2><button class="secondary" id="clearState">Show all</button></div><div id="stateGrid" class="tags" style="gap:10px"><div class="empty">Loading…</div></div>
+<div id="districtBox" class="hidden" style="margin-top:14px"><h3 id="districtHead" style="margin:0 0 8px"></h3><div id="districtGrid" class="tags" style="gap:10px"></div><div id="districtLinks" style="margin-top:10px"></div></div></section>
+</main>
+<footer>KaamSetu · Sirf official/notice links. Details aur apply ke liye original source par jayein.</footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://lnclkwvbismmhhygpblw.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_dMccx0xBmAfPLHO8h1FlNA_i_BJjD0J";
+function getDeviceId(){try{let id=localStorage.getItem("kaamsetu_device_id");if(!id){id=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():"dev-"+Date.now()+"-"+Math.random().toString(36).slice(2);localStorage.setItem("kaamsetu_device_id",id)}return id}catch(e){return "dev-"+Math.random().toString(36).slice(2)}}
+const DEVICE_ID=getDeviceId();
+const configured=SUPABASE_URL.startsWith("https://")&&!SUPABASE_URL.includes("YOUR_")&&!SUPABASE_ANON_KEY.includes("YOUR_");
+const db=configured?window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{global:{headers:{"x-device-id":DEVICE_ID}}}):null;
+const KIND="tender";
+let stateFilter="",districtFilter="",districtList=[];
+const $=id=>document.getElementById(id);
+function safeText(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function msg(t,k=""){const el=$("message");el.textContent=t;el.className="notice "+k;el.classList.remove("hidden")}
+function needConfig(){if(!db){msg("Setup baaki hai.","error");return false}return true}
+function renderCard(j){return `<article class="job"><div class="company">${safeText(j.company_name||j.source_name||"")}</div><h3>${safeText(j.title)}</h3><div class="muted">📍 ${safeText(j.location)}</div><div class="tags"><span class="tag">${safeText(j.kind)}</span>${j.sector?`<span class="tag">${safeText(j.sector)}</span>`:""}${j.state?`<span class="tag">${safeText(j.state)}</span>`:""}${j.district?`<span class="tag">${safeText(j.district)}</span>`:""}${j.source_name?`<span class="tag">via ${safeText(j.source_name)}</span>`:""}</div><p>${safeText((j.description||"").slice(0,240))}</p><div class="jobfoot"><span class="muted">Added ${new Date(j.created_at).toLocaleDateString("en-IN")}</span>${j.apply_url?`<a href="${safeText(j.apply_url)}" target="_blank" rel="noopener noreferrer"><button>View notice ↗</button></a>`:""}</div></article>`}
+async function loadJobs(){if(!needConfig())return;let q=db.from("jobs").select("*").eq("status","approved").eq("kind",KIND).eq("in_india",true).is("archived_at",null).order("created_at",{ascending:false});if(stateFilter==="__null__")q=q.is("state",null);else if(stateFilter)q=q.eq("state",stateFilter);if(districtFilter)q=q.eq("district",districtFilter);const {data,error}=await q.limit(200);$("list").innerHTML=error?'<div class="empty">Load nahi hui.</div>':((data||[]).length?data.map(renderCard).join(""):'<div class="empty">Abhi kuch nahi hai.</div>')}
+async function loadStates(){if(!needConfig())return;const {data}=await db.from("jobs").select("state").eq("status","approved").eq("kind",KIND).eq("in_india",true).is("archived_at",null);const counts={};let total=0;for(const r of (data||[])){const s=r.state||"All India";counts[s]=(counts[s]||0)+1;total++}const keys=Object.keys(counts).sort((a,b)=>counts[b]-counts[a]);let html='<button class="secondary" data-state="">All India ('+total+')</button>'+keys.map(s=>{const v=(s==="All India")?"__null__":s;return '<button class="secondary" data-state="'+safeText(v)+'">'+safeText(s)+' ('+counts[s]+')</button>'}).join("");$("stateGrid").innerHTML=html;await loadDistricts()}
+async function loadDistricts(){const box=$("districtBox");if(!stateFilter||stateFilter==="__null__"){box.classList.add("hidden");return}const {data:ds}=await db.from("districts").select("name,nic_url,court_url").eq("state",stateFilter).order("name");districtList=ds||[];const {data:js}=await db.from("jobs").select("district").eq("status","approved").eq("kind",KIND).eq("in_india",true).is("archived_at",null).eq("state",stateFilter);const counts={};for(const r of (js||[]))if(r.district)counts[r.district]=(counts[r.district]||0)+1;$("districtHead").textContent="Districts in "+stateFilter;$("districtGrid").innerHTML='<button class="secondary" data-district="">All districts</button>'+districtList.map(d=>'<button class="secondary" data-district="'+safeText(d.name)+'">'+safeText(d.name)+(counts[d.name]?(' ('+counts[d.name]+')'):'')+'</button>').join("");box.classList.remove("hidden");showDistrictLinks()}
+function showDistrictLinks(){const el=$("districtLinks");if(!districtFilter){el.innerHTML="";return}const d=districtList.find(x=>x.name===districtFilter);if(!d){el.innerHTML="";return}el.innerHTML='<div class="muted">'+safeText(d.name)+' — official links:</div><div class="tabs" style="margin-top:6px"><a href="'+safeText(d.nic_url||"#")+'" target="_blank" rel="noopener noreferrer"><button class="secondary">District NIC portal ↗</button></a><a href="'+safeText(d.court_url||"#")+'" target="_blank" rel="noopener noreferrer"><button class="secondary">District court (eCourts) ↗</button></a></div>'}
+$("stateGrid").onclick=e=>{const b=e.target.closest("button[data-state]");if(!b)return;stateFilter=b.dataset.state;districtFilter="";loadDistricts();loadJobs()};
+$("districtGrid").onclick=e=>{const b=e.target.closest("button[data-district]");if(!b)return;districtFilter=b.dataset.district;showDistrictLinks();loadJobs()};
+$("clearState").onclick=()=>{stateFilter="";districtFilter="";$("districtBox").classList.add("hidden");loadJobs();loadStates()};
+$("typeFilter").onchange=loadJobs;
+(async()=>{await loadStates();await loadJobs()})();
+</script>
+</body></html>
