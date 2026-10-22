@@ -72,8 +72,8 @@ A company can submit a vacancy. It stays pending until admin approves it.
 
 Visitors can post a vacancy without creating an account. On first visit the page
 generates a random device id, stores it in the browser (`localStorage`), and sends
-it with every request as an `x-device-id` header. That id is what lets an anonymous
-visitor see and delete their own submissions.
+it with every request as an `x-device-id` header. That id lets an anonymous visitor
+see and delete their own submissions.
 
 - Posts are inserted as `pending` and only become public after admin approval.
 - Row Level Security lets the `anon` role insert, read and delete only rows whose
@@ -91,6 +91,28 @@ When a vacancy's last date passes it is archived, not deleted. A daily Supabase
 - The main "Latest vacancies" feed hides archived jobs and past deadlines.
 - The **Archive** view groups archived vacancies by year and month.
 - Archiving only sets `archived_at`; rows are never deleted.
+
+## Daily job ingestion (feeds and government notices)
+
+Jobs are pulled automatically from sources we are allowed to read, never copied
+from commercial portals.
+
+- `job_sources` lists the allowed sources: RSS/JSON feeds and official government
+  notice pages. Admins manage it; the public can read the active list.
+- A Supabase Edge Function (`ingest-feeds`) fetches each active source, maps it to a
+  `jobs` row and inserts it as `approved`. De-duplication is by `source_url` (unique
+  index); every row keeps `source_name` + `source_url` for attribution, and
+  `apply_url` points back to the original posting.
+- A daily `pg_cron` job (`ingest-feeds-daily`, 02:00 UTC) calls the function through
+  `pg_net`, authenticated with a secret kept in `app_config` (RLS on, no policies).
+- A separate daily agent job (08:00 IST) checks official government recruitment
+  pages, writes a short neutral summary of each new notification, and stores it with
+  a link to the official notification.
+
+**What this does not do:** it never scrapes or re-publishes listings from commercial
+portals (Naukri, LinkedIn, Indeed and similar). Those prohibit scraping and their
+listings are copyrighted. Add a source only if it publishes a feed or you hold the
+right to use it.
 
 ## Important limitations / production hardening
 - This is a functional starter, not a fully audited commercial hiring platform.
