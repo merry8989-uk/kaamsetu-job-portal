@@ -81,6 +81,17 @@ visitor see and delete their own submissions.
 - The device id is not a security credential: clearing browser storage creates a
   new identity. Keep admin approval on to control spam and job scams.
 
+## Vacancy archive
+
+When a vacancy's last date passes it is archived, not deleted. A daily Supabase
+`pg_cron` job (`archive-expired-jobs-daily`, 01:15 UTC) calls
+`public.archive_expired_jobs()`, which stamps `archived_at` on any job whose
+`deadline` is in the past.
+
+- The main "Latest vacancies" feed hides archived jobs and past deadlines.
+- The **Archive** view groups archived vacancies by year and month.
+- Archiving only sets `archived_at`; rows are never deleted.
+
 ## Important limitations / production hardening
 - This is a functional starter, not a fully audited commercial hiring platform.
 - Employer approval currently uses manual SQL. Build a dedicated admin user-management screen before handing it to a larger team.
