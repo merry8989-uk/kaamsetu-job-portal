@@ -98,6 +98,13 @@ Severity: TRACE, DEBUG, INFO, WARN, ERROR, FATAL. Categories: `app`, `error`,
 - Admins get a **Logs** panel in the dashboard: filter by severity/category, search,
   and export the current view to CSV.
 
+### Analytics (admin)
+
+`public.admin_analytics(p_days)` (admin-only) returns a JSON summary of the log
+window: totals, by severity, by category, active devices, top pages, top searches
+and event counts. The dashboard shows it in an **Analytics** panel with a
+24-hour / 7-day / 30-day switch.
+
 ## Important limitations / production hardening
 - This is a functional starter, not a fully audited commercial hiring platform.
 - Employer approval currently uses manual SQL. Build a dedicated admin user-management screen before handing it to a larger team.
