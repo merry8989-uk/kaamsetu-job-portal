@@ -68,30 +68,20 @@ A company can submit a vacancy. It stays pending until admin approves it.
 - Test on mobile and desktop.
 - Verify application links and employer identity before approving posts.
 
-## Anonymous posting (no login)
+## Accounts and admin
 
-Visitors post without an account; a random device id in `localStorage` is sent as an `x-device-id` header. Posts stay `pending` until an admin approves.
+Register on the site with email + password; the first profile is created as
+`job_seeker`. To become admin, the owner account is promoted with:
 
-## Vacancy archive
+```sql
+update public.profiles p set role = 'admin'
+from auth.users u where p.id = u.id and u.email = 'YOUR_EMAIL';
+```
 
-A daily `pg_cron` job (`archive-expired-jobs-daily`, 01:15 UTC) stamps `archived_at` on jobs whose `deadline` passed. The main feed hides them; the **Archive** view groups them by year and month. Rows are never deleted.
-
-## Daily job ingestion (India-only)
-
-- `job_sources` lists allowed sources: RSS/JSON feeds and official government notice pages.
-- `ingest-feeds` (Edge Function) fetches every active source in parallel and inserts `approved` rows, de-duplicated by `source_url`; non-India items are skipped.
-- `pg_cron` job `ingest-feeds-daily` (02:00 UTC) calls it through `pg_net`.
-- A daily agent job (08:00 IST) covers boards that block bots and writes short summaries.
-
-Commercial portals (Naukri, LinkedIn, Indeed and similar) are never scraped or re-published.
-
-## Sectors, states, districts and content kinds
-
-- `sector`: Government, Private, Banking, Railway, Civil Services, Defence, Police, Teaching, Healthcare, IT & Software, Engineering, Internship.
-- `state` and `district`: set from the location by `public.jobs_set_geo()` using `public.india_places` and `public.districts` (779 districts across all states/UTs). Matching is whole-token, so short names do not mis-match.
-- Each district row also carries two official links: `nic_url` (district NIC portal) and `court_url` (district eCourts site).
-- `kind`: `job`, `tender` or `scheme` - the site shows Jobs / Tenders / Schemes as separate filters so tenders and schemes stay apart from jobs.
-- The portal is India-only: the feed and the browse-by-state / browse-by-district views show only rows with `in_india = true`. Selecting a state shows every district of that state, so all districts' notices sit in one place; clicking a district narrows further and shows that district's two links.
+After that the Dashboard shows **Admin moderation** and a **Users & roles** panel
+(`public.admin_list_users()` / `public.admin_set_role()`, both admin-only). Anyone
+else registers normally on the site, then the admin sets their role to `company`
+(to post jobs) or `admin` from that panel - no SQL needed.
 
 ## Important limitations / production hardening
 - This is a functional starter, not a fully audited commercial hiring platform.
