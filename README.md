@@ -80,28 +80,35 @@ A daily `pg_cron` job (`archive-expired-jobs-daily`, 01:15 UTC) stamps `archived
 on jobs whose `deadline` has passed. The main feed hides them; the **Archive** view
 groups them by year and month. Rows are never deleted.
 
-## Daily job ingestion
+## Daily job ingestion (India-only)
 
-- `job_sources` lists allowed sources (RSS/JSON feeds and official government notice
-  pages).
-- The `ingest-feeds` Edge Function fetches each active source and inserts `approved`
-  rows, de-duplicated by `source_url`, keeping `source_name` + `source_url`.
+- `job_sources` lists the allowed sources. India-focused sources are the official
+  government recruitment boards and notice pages (central plus state PSCs).
+- `job_sources.state_hint` makes a state PSC's notices land in the right state
+  (e.g. BPSC -> Bihar), so they show in the state-wise browse section.
+- The `ingest-feeds` Edge Function fetches every active source in parallel and
+  inserts `approved` rows, de-duplicated by `source_url`. Non-India items are skipped.
 - `pg_cron` job `ingest-feeds-daily` (02:00 UTC) calls it through `pg_net`.
-- A daily agent job (08:00 IST) writes short summaries of new government notices.
+- A daily agent job (08:00 IST) covers boards that block automated reads and writes
+  short summaries of new government notices.
+
+Sources that read cleanly include HPSC (Haryana), MPPSC (Madhya Pradesh), Kerala PSC,
+GPSC (Gujarat), OPSC (Odisha), CGPSC, RPSC, TNPSC, UPPSC, DRDO, NTA, ISRO, India Post,
+LIC, Indian Navy and Employment News. Some boards block bots (UPSC returns 403, RBI
+418, a few have certificate or timeout issues) - the agent job covers those.
 
 Commercial portals (Naukri, LinkedIn, Indeed and similar) are never scraped or
 re-published.
 
 ## Sectors and states
 
-- `sector` is set automatically by `public.classify_job_sector(title, source_name)`
-  via a trigger: Government, Private, Banking, Railway, Civil Services, Defence,
-  Police, Teaching, Healthcare, IT & Software, Engineering, Internship.
+- `sector` is set automatically by `public.classify_job_sector(title, source_name)`:
+  Government, Private, Banking, Railway, Civil Services, Defence, Police, Teaching,
+  Healthcare, IT & Software, Engineering, Internship.
 - `state` and `in_india` are set by `public.jobs_set_geo()` using the
   `public.india_places` lookup (states, UTs and major cities).
-- The portal is **India-only**: the feed and the "Browse jobs by state" section show
-  only rows with `in_india = true`. The ingest function also skips non-India items.
-- Government notices are always treated as India based.
+- The portal is India-only: the feed and the "Browse jobs by state" section show only
+  rows with `in_india = true`.
 
 ## Important limitations / production hardening
 - This is a functional starter, not a fully audited commercial hiring platform.
