@@ -114,6 +114,13 @@ device per minute. Registrations (`user_registered`) and job submissions
 (`job_submitted`) are written by **database triggers**, so they cannot be faked or
 skipped from the browser.
 
+### District coverage (admin)
+
+`public.admin_district_coverage()` returns, for admins: totals (districts, districts
+with data, district-source health), a per-state table, the top districts by volume,
+and the districts with no data yet. The dashboard shows it in a **District coverage**
+panel with CSV export.
+
 ## Important limitations / production hardening
 - This is a functional starter, not a fully audited commercial hiring platform.
 - Employer approval currently uses manual SQL. Build a dedicated admin user-management screen before handing it to a larger team.
