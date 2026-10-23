@@ -129,6 +129,36 @@ panel with CSV export.
 dashboard's **Diagnostics** panel lists them and can **Export JSON** or **Clear**
 them. `diagnostics` is accepted as a category by `log_event`.
 
+## Schema and a fresh setup
+
+`supabase-schema.sql` is the **complete** schema, generated from the live database,
+so a new project matches production: tables, constraints, indexes, functions,
+triggers, RLS policies, grants and the pg_cron schedules. Run
+`supabase/seed-reference.sql` after it to load `india_places`, all 779 districts and
+the runtime config.
+
+## Backups
+
+Supabase takes daily backups on paid plans; on the free tier export regularly.
+
+- Logical export (database password: Project Settings -> Database):
+  `pg_dump "$DATABASE_URL" --schema=public --no-owner > backup-$(date +%F).sql`
+- Quick table export from the SQL editor:
+  `copy (select * from public.jobs) to stdout with (format csv, header true);`
+- `supabase-schema.sql` + `supabase/seed-reference.sql` in the repo can rebuild the
+  structure and reference data on a new project.
+- Logs are pruned after 90 days (`log_retention_days`) - export them first if you
+  need them long term.
+
+## Content safety
+
+- Anonymous posting is rate-limited to 5 vacancies per device per hour, plus a hidden
+  honeypot field on the form.
+- Listings are de-duplicated by `dedup_key` (title + company + location).
+- Jobs with no deadline are archived after 60 days.
+- `privacy.html` and `terms.html` cover data collection and acceptable use.
+- Every listing has a permalink page (`job.html?id=...`) for sharing and SEO.
+
 ## Important limitations / production hardening
 - This is a functional starter, not a fully audited commercial hiring platform.
 - Employer approval currently uses manual SQL. Build a dedicated admin user-management screen before handing it to a larger team.
