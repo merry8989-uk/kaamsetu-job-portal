@@ -58,18 +58,42 @@
     error: function (c, m, d) { send("ERROR", c, m, d); },
     fatal: function (c, m, d) { send("FATAL", c, m, d); },
     security: function (m, d) { send("WARN", "security", m, d); },
+    diagnostics: function (m, d) { send("INFO", "diagnostics", m, d); },
     requestId: requestId
   };
 
+  function context() {
+    try {
+      return {
+        ua: navigator.userAgent,
+        platform: navigator.platform,
+        lang: navigator.language,
+        screen: window.screen ? screen.width + "x" + screen.height : null,
+        dpr: window.devicePixelRatio || null,
+        online: navigator.onLine,
+        url: location.href,
+        mem: (performance && performance.memory) ? Math.round(performance.memory.usedJSHeapSize / 1048576) + "MB" : null
+      };
+    } catch (e) { return {}; }
+  }
+
+  function crash(message, extra) {
+    send("ERROR", "diagnostics", "crash", Object.assign({ message: String(message).slice(0, 300) }, context(), extra || {}));
+  }
+
   window.addEventListener("error", function (e) {
-    send("ERROR", "error", e.message || "Script error", {
+    var info = {
       source: (e.filename || "") + ":" + (e.lineno || 0),
       stack: e.error && e.error.stack ? String(e.error.stack).slice(0, 800) : null
-    });
+    };
+    send("ERROR", "error", e.message || "Script error", info);
+    crash(e.message || "Script error", info);
   });
   window.addEventListener("unhandledrejection", function (e) {
     var r = e.reason || {};
-    send("ERROR", "error", "Unhandled promise rejection", { reason: String(r.message || r).slice(0, 500) });
+    var info = { reason: String(r.message || r).slice(0, 500) };
+    send("ERROR", "error", "Unhandled promise rejection", info);
+    crash("Unhandled promise rejection", info);
   });
 
   send("INFO", "activity", "page_view", { referrer: document.referrer || null });

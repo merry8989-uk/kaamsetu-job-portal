@@ -121,6 +121,14 @@ with data, district-source health), a per-state table, the top districts by volu
 and the districts with no data yet. The dashboard shows it in a **District coverage**
 panel with CSV export.
 
+### Diagnostics (crash reporting)
+
+`logger.js` reports every JavaScript error and unhandled rejection twice: once as an
+`error` log, and once as a `diagnostics` crash record carrying device/browser context
+(user agent, platform, language, screen, DPR, online state, URL, JS heap). The
+dashboard's **Diagnostics** panel lists them and can **Export JSON** or **Clear**
+them. `diagnostics` is accepted as a category by `log_event`.
+
 ## Important limitations / production hardening
 - This is a functional starter, not a fully audited commercial hiring platform.
 - Employer approval currently uses manual SQL. Build a dedicated admin user-management screen before handing it to a larger team.
