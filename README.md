@@ -68,9 +68,9 @@ A company can submit a vacancy. It stays pending until admin approves it.
 - Test on mobile and desktop.
 - Verify application links and employer identity before approving posts.
 
-## Tender filters
+## Tender and scheme filters
 
-`tenders.html` adds tender-specific controls: a **department** filter (built from
+`tenders.html` and `schemes.html` add the same controls: a **department** filter (built from
 `source_name`) and a **closing-date** filter (closing in 7 / 30 days, open, closed),
 plus a closing-date countdown badge on each card. The deadline is parsed from the
 notice title by `parseDeadline()` in the ingest function.
