@@ -73,7 +73,7 @@ A company can submit a vacancy. It stays pending until admin approves it.
 `tenders.html` and `schemes.html` add the same controls: a **department** filter (built from
 `source_name`) and a **closing-date** filter (closing in 7 / 30 days, open, closed),
 plus a closing-date countdown badge on each card. The deadline is parsed from the
-notice title by `parseDeadline()` in the ingest function.
+notice title by `public.parse_deadline()` - a database trigger sets it on insert, so the browser and the ingest function share one parser.
 
 The Edge Function source is versioned at `functions/ingest-feeds/index.ts`.
 

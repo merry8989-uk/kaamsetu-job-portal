@@ -22,6 +22,8 @@ function clean(s: unknown): string {
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
+    .replace(/&#(\d+);/g, (_full, d) => String.fromCharCode(+d))
+    .replace(/&#x([0-9a-f]+);/gi, (_full, h) => String.fromCharCode(parseInt(h, 16)))
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -41,26 +43,6 @@ function kindGuess(text: string, fallback: string): string {
   if (/scheme|yojana|scholarship|subsidy|welfare/.test(t)) return "scheme";
   if (/recruit|vacanc|career|\bjob\b|apply|appointment|engagement|walk-?in/.test(t)) return "job";
   return fallback || "job";
-}
-
-function parseDeadline(text: string): string | null {
-  if (!text) return null;
-  let m = text.match(/\b(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})\b/);
-  if (m) {
-    const d = +m[1], mo = +m[2], y = +m[3];
-    if (d >= 1 && d <= 31 && mo >= 1 && mo <= 12) {
-      return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-    }
-  }
-  const mon: Record<string, number> = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
-  m = text.match(/\b(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+(\d{4})\b/i);
-  if (m) {
-    const d = +m[1], mo = mon[m[2].slice(0, 3).toLowerCase()], y = +m[3];
-    if (d >= 1 && d <= 31 && mo) {
-      return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-    }
-  }
-  return null;
 }
 
 function jobTypeGuess(text: string): string {
@@ -127,7 +109,6 @@ function toJobRow(s: any, it: any) {
     source_name: clean(s.name).slice(0, 120),
     source_url: apply || null,
     kind: kindGuess(`${it.title || ""} ${it.url || ""}`, s.kind_hint || "job"),
-    deadline: parseDeadline(`${it.title || ""} ${it.description || ""}`),
     status: "approved",
   };
 }
